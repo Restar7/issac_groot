@@ -1,0 +1,32 @@
+# environments
+.venv*/
+venv/
+simvenv/
+__pycache__/
+*.pyc
+
+# models & weights
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.plan
+*.engine
+*.trt
+
+# datasets / recordings / renders
+*.mp4
+*.avi
+*.mov
+*.npz
+*.bag
+
+# build & caches
+build/
+target/
+.cache/
+.pytest_cache/
+.ruff_cache/
+*.so
+*.a
+*.o
