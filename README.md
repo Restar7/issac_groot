@@ -10,7 +10,8 @@
 |---|---|---|
 | `Isaac-GR00T/` | 官方训练/推理框架 | 策略服务端 `Gr00tPolicy`、模型定义、processor |
 | `GR00T-WholeBodyControl/` | 官方部署仓库 | SONIC C++ 控制器、MuJoCo 仿真、PICO 遥操作、LeRobot 导出 |
-| `groot_repro/` | **我们自己的复现工作** | 关键脚本、排坑记录、场景、结果 |
+| `groot_repro/` | **我们自己的复现工作** | 关键脚本、排坑记录、结果 |
+| `reproduce_scenes/` | **场景与初始位姿** | 部署评测用的 MJCF + 网格 + 初始状态，可原样重建 |
 
 > 只上传了代码与配置。venv、TensorRT、ONNX 权重、数据集、视频都没有进仓库（见文末「没有上传的东西」）。
 
@@ -129,6 +130,15 @@ python groot_repro/render_policy_physics.py --chunks 12 \
     --scene <scene_43dof_two_table.xml> --prompt "Pick up the carton ..." \
     --device cuda:0 --gpu-gib 2.4GiB --out out/carton.mp4
 ```
+
+### 场景复现
+
+```bash
+cd reproduce_scenes
+python verify_scenes.py --render /tmp/preview   # 8 个场景全部加载 + 渲染
+```
+
+`reproduce_scenes/README.md` 里有场景↔任务对照表、初始位姿格式和 43 维关节顺序的坑。
 
 ### 编译 x86 版 C++ 控制器
 
