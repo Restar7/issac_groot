@@ -44,35 +44,35 @@ reproduce_scenes/
 部分还有 `front_view` / `task_view` / `q3_view`。
 **policy 用的是 `head_camera`**（sim 里发布成 `ego_view` 话题）。
 
-## 初始位姿文件
+## 初始位姿文件（三种格式）
 
-`initial_states/*.json` 是评测时实际下发的初始状态，格式：
+### A. 单帧初始位姿 —— `*_initial_state.json` / `*_init_state.json` / `*_identity_state.json`
 
 ```json
 {
   "format_version": 1,
-  "source": "<录制 episode 的 parquet 路径>",
+  "source": "<录制 parquet 路径>",
   "source_sha256": "...",
   "episode_index": 0,
   "frame_index": 0,
   "base_position": [0.0, 0.0, 0.793],
   "base_quaternion_wxyz": [...],
   "recorded_heading_init_quaternion_wxyz": [...],
-  "joint_positions": [...]
+  "joint_positions": [ ... 43 维 ... ]
 }
 ```
 
-其中 `joint_positions` 是 **43 维**（29 本体 + 14 手），顺序与数据集 `observation.state` 一致：
+`joint_positions` 是 **43 维**（29 本体 + 14 手），顺序与数据集 `observation.state` 一致：
 `左腿6 右腿6 腰3 左臂7 左手7 右臂7 右手7`。
 
-### 用法
+用法：
 
 ```python
 import json, mujoco
 
 m = mujoco.MjModel.from_xml_path("g1/scene_43dof_two_table.xml")
 d = mujoco.MjData(m)
-s = json.load(open("initial_states/carton_episode0_warmstart.json"))
+s = json.load(open("initial_states/handover_episode0_initial_state.json"))
 
 d.qpos[0:3] = s["base_position"]
 d.qpos[3:7] = s["base_quaternion_wxyz"]
@@ -84,12 +84,31 @@ d.qpos[36:50] = [jp[i] for i in hand]
 mujoco.mj_forward(m, d)
 ```
 
-注意那个索引置换：**数据集的 43 维顺序不是 MJCF 的关节顺序**（MJCF 把左手插在左臂和右臂之间）。
-这是复现时最容易错的地方之一。
+注意那个索引置换：**数据集的 43 维顺序不是 MJCF 的关节顺序**
+（MJCF 把左手插在左臂和右臂之间）。这是复现时最容易错的地方之一。
 
-`initial_states/task4/*.json` 是另一种格式（评测协议）：里面是
-`initial_motion_token`（64 维）+ `recorded_init_base_quat_wxyz` + `source_frame_index`，
-对应 task4 的随机初始状态池。
+### B. warmstart 序列 —— `*_warmstart*.json`
+
+评测在切到 POSE 模式前会先播一段"planner 预热"，这批文件就是那段序列：
+
+```json
+{
+  "format_version": 1,
+  "source": "2026-07-14_put_carton_into_box_clean/.../episode_0",
+  "episode_index": 0,
+  "source_frame_indices": [0, 1, 2, 3, 4],
+  "collection_frequency_hz": 50,
+  "stream_mode": "PLANNER_VR_3PT",
+  "target_observation_state": [ ... 43 维 ... ],
+  "frames": [ { "planner_mode": 0, "planner_movement": [...], "planner_facing": [...] }, ... ]
+}
+```
+
+### C. task4 初始 motion token —— `task4/*.json`
+
+task4 的随机初始状态池用的是另一种协议：`initial_motion_token`（64 维）+
+`recorded_init_base_quat_wxyz` + `source_frame_index`，对应评测里的
+`task4-random-clean34-initial-token-v1`。
 
 ## 验证
 
